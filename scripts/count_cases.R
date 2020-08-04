@@ -2,6 +2,7 @@ library(tidyverse)
 library(data.table)
 
 #### LOAD DATA
+
 # load rare disease data
 rare_diseases = read.csv("~/Documents/rare_diseases_participant_dise_2019-09-26_16-44-06.csv")
 # SM using this dataset, I'm using slightly earlier one
@@ -45,9 +46,9 @@ for (i in unique_norm_spec_dis){
 }
 
 #add tmeplist to df
-df[,'num_recruited_cases']<-unlist(templist)
+df[, 'num_recruited_cases'] <- unlist(templist)
 
-tally(df[df$num_recruited_cases < 10,])
+tally(df[df$num_recruited_cases < 10, ])
 ## 44 diseases with recruited cases < 10
 
 
@@ -66,22 +67,22 @@ create_case_sets <- function(disease_name){
   # cases of the disease of interest, with added info on age and gender
   cases = disease_interest %>% 
     inner_join(participants) %>% 
-    mutate(age = 2019-year_of_birth,
-           binaryGender = ifelse(participant_phenotypic_sex == "Male",0,1)) 
+    mutate(age = 2019 - year_of_birth,
+           binaryGender = ifelse(participant_phenotypic_sex == "Male", 0, 1)) ### TO DO - CHECK
   
   #print(cases)
   
   # check population demographics data e.g. mean age, gender and number of the cases for the disease of interest
-  demographics_cases =cases %>% 
+  demographics_cases = cases %>% 
     summarise(Avg_age = mean(age),
               PercFem = mean(binaryGender),
               Count = n())
   
-  # out of all participants with EHR disease for rare diseases and admidate>5 years, createa table with age, gender and disease label
+  # out of all participants with EHR disease for rare diseases and admidate>5 years, create a table with age, gender and disease label
   population = rare_disease_EHR_controlled %>% 
     inner_join(participants) %>% 
-    mutate(age = 2019-year_of_birth,
-           binaryGender = ifelse(participant_phenotypic_sex == "Male",0,1)) %>% 
+    mutate(age = 2019 - year_of_birth,
+           binaryGender = ifelse(participant_phenotypic_sex == "Male", 0, 1)) %>% ### TO DO - CHECK
     inner_join(disease_label)
   
   #print(population)
@@ -91,9 +92,6 @@ create_case_sets <- function(disease_name){
     filter(!duplicated(participant_id)) %>%
     mutate(Pheno = "Case") %>%
     filter(participant_id %in% rare_disease_EHR_controlled$participant_id)
-    ####### TO DO #######
-    #### CHANGED THIS LINE, CHECK IN ORIGINAL IF BUG ####
-    #filter(participant_id %in% participantsWithEHR$participant_id)
 
   #print(cases.cur)  
   selected_case_num <- length(unique(cases.cur$participant_id))
@@ -113,9 +111,9 @@ for (i in unique_norm_spec_dis){
 }
 
 # add num_selected_cases list to df
-df[,'num_selected_cases']<-unlist(num_selected_cases)
+df[, 'num_selected_cases'] <- unlist(num_selected_cases)
 
-tally(df[df$num_selected_cases < 10,])
+tally(df[df$num_selected_cases < 10, ])
 ## 44 diseases with recruited cases < 10
 
 df %>%
