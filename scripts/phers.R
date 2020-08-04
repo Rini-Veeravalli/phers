@@ -1,5 +1,9 @@
 # This script calculates the PheRS for rare disease participants in GeL
 # and visualises the PheRS distribution of cases and controls for X normalised specific diseases.
+# Input: disease list and associated OMIM IDs. 
+# Output: summary of OMIM/HPO/Phecodes/ICD10 codes mapped to each disease, 
+#         summary of case/control cohort data for each disease, 
+#         visualisations of PheRS between case and controls for each disease. 
 # Code developed by Stefanie Mueller and Rini Veeravalli.
 
 
@@ -73,7 +77,7 @@ population_participants = population_icds %>%
   left_join(disease_label) %>%
   filter(!is.na(normalised_specific_disease))
 
-# Number of total participants with EHR data and admission date of > 5 years
+# Number of Total participants with EHR data and admission date of > 5 years
 
 ALLNUM = unique(population_icds$participant_id) %>%
   length()
