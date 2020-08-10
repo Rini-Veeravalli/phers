@@ -66,6 +66,17 @@ population_icds = icds %>%
   filter(participant_id %in% icds_admidate_pre2014$participant_id) %>%
   left_join(map_phe_icd10, by = c("ICD10_CLEAN1" = "ICD10")) 
 
+# add record length (unique number of years of hes records)
+
+record_length = fread("hes_apc_icds_v7_long_format.csv") %>%
+  select(participant_id, admidate) %>%
+  filter(participant_id %in% unique(population_icds$participant_id)) %>%
+  distinct() %>%
+  mutate(admidate = format(as.Date(admidate, format="%Y-%m-%d"), "%Y")) %>%
+  distinct() %>%
+  group_by(participant_id) %>%
+  summarise(record_len = n_distinct(admidate))
+
 # Participant data of Total participants with EHR data and admission date of > 5 years and disease data
 
 population_participants = population_icds %>%
@@ -75,7 +86,8 @@ population_participants = population_icds %>%
   mutate(age = 2019 - year_of_birth,
          binaryGender = ifelse(participant_phenotypic_sex == "Male", 1, 0)) %>% 
   left_join(disease_label) %>%
-  filter(!is.na(normalised_specific_disease))
+  filter(!is.na(normalised_specific_disease)) %>%
+  left_join(record_length)
 
 # Number of Total participants with EHR data and admission date of > 5 years
 
@@ -201,8 +213,8 @@ create_case_control_sets <- function(disease_filename, disease_index, ccratio) {
     filter(!duplicated(participant_id)) %>% 
     mutate(Pheno = "Control")
   
-  together = rbind(selected_cases[, c("participant_id", "age", "binaryGender", "Pheno")],
-                   possible_controls[, c("participant_id", "age", "binaryGender", "Pheno")]) %>% 
+  together = rbind(selected_cases[, c("participant_id", "age", "binaryGender", "record_len", "Pheno")],
+                   possible_controls[, c("participant_id", "age", "binaryGender", "record_len", "Pheno")]) %>% 
     mutate(isCase = ifelse(Pheno == "Case", T, F)) %>% 
     mutate(factorGender = ifelse(binaryGender == 1, "male", "female") %>%
              as.factor)
@@ -211,7 +223,7 @@ create_case_control_sets <- function(disease_filename, disease_index, ccratio) {
   # --- match controls
   set.seed(1)
   options("optmatch_max_problem_size" = Inf)
-  match <- matchit(isCase ~ age + factorGender, data = together, method = "optimal", ratio = ccratio)
+  match <- matchit(isCase ~ age + factorGender + record_len, data = together, method = "optimal", ratio = ccratio)
   
   # Save descriptive summary of case/control samples
   capture.output(summary(match), file = paste0("samples/", disease_filename,"_samples_summary_ccratio_", ccratio,".txt"))
