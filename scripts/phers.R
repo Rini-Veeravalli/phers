@@ -185,12 +185,9 @@ calculate_phers <- function(disease_filename, disease_index) {
 
 
 create_case_control_sets <- function(disease_filename, disease_index, ccratio) {
-  disease_interest = disease_label %>%
-    filter(normalised_specific_disease == map_disease_omim$NormalisedSpecificDisease[disease_index]) %>% 
-    select(participant_id, normalised_specific_disease)
   
-  selected_cases = disease_interest %>% 
-    inner_join(population_participants) %>% 
+  selected_cases = population_participants %>% 
+    filter(normalised_specific_disease == map_disease_omim$NormalisedSpecificDisease[disease_index]) %>%  
     filter(!duplicated(participant_id)) %>%
     mutate(Pheno = "Case")
 
