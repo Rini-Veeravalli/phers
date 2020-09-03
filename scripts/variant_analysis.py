@@ -1,3 +1,11 @@
+# part I of variant analysis:
+# script that reads extracted_ClinVar_variants_[disease].txt:
+#                   columns = Chrom, Pos, Ref, Alt, INFO_AC, INFO_AN, INFO_NS, INFO_AF, SAMPLE=GT (genetic carrier information of all tested participants (in one cell)
+#                   rows = extracted ClinVar varianst of the disease
+#  
+# and transforms it into 1) samplesGT_[disease].csv: columns = extracted ClinVar variants, rows = genetic variant results per participant 
+#                        2) extracted_ClinVar_variants_[disease].csv: .csv version of original .txt file
+
 import pandas as pd
 import numpy as np
 from io import StringIO
@@ -5,8 +13,6 @@ import string
 
 
 datalist = [[]]
-#print(type(datalist))
-
 
 #create empty dataframe
 df_samplesGT = pd.DataFrame(columns=['chr3'])
@@ -14,7 +20,6 @@ df_samplesGT = pd.DataFrame(columns=['chr3'])
 with open("extracted_ClinVar_variants_Brugada.txt") as infile:
 	count = 0
 	for line in infile:
-		#print(type(line))
 		templist =[[]]
 		
 		if (count == 0):
@@ -22,9 +27,6 @@ with open("extracted_ClinVar_variants_Brugada.txt") as infile:
 			count = count + 1
 		else:
 			rowentries = line.split("\t")
-			#print(len(rowentries)-8)
-			#print(len(datalist[0]))
-			# TODO remove \n
 			templist.insert(0, rowentries[0] )
 			templist.insert(1, rowentries[1] )
 			templist.insert(2, rowentries[2] )
@@ -38,48 +40,28 @@ with open("extracted_ClinVar_variants_Brugada.txt") as infile:
 			#add new col to samplesGT df with samples as rows
 			df_samplesGT[str(rowentries[1])] = pd.Series(rowentries[-(len(rowentries)-8):])
 			
-			#print(rowentries[-1:])
-			#print(templist[0:9])
 			datalist.append(templist)
-			
+				
+df_samplesGT = df_samplesGT.drop(columns=['chr3'])
+df_finalsamplesGT = pd.DataFrame()
+
+# remove \n in the last row of data
+for col in df_samplesGT.iteritems():
+	# add to new dataframe
+	df_finalsamplesGT[str(col[0])] = col[-1].map(lambda x : x.rstrip('\n'))	
+print(df_finalsamplesGT.head())
+
+# save dataframe of samples genetically tested for disease as .csv file
+df_finalsamplesGT.to_csv("samplesGT_Brugada.csv", encoding = 'utf-8', index = False)
 
 
-#print(colnames)
-#print(datalist[0])
+# [optional] convert original extracted variant .txt file to .csv 
 datalist.remove(datalist[0]) # removes empty [] at start of list
-
-#print(len(colnames))
-#print(len(datalist))
-#print(len(datalist[0]))
 length = len(datalist)
 for i in range(length):
 	datalist[i].remove(datalist[i][9]) # removes empty [] at end of row within item of list
-
-#print(len(colnames))
-#print(len(datalist))
-#print(len(datalist[0]))
-		
-		#break
-		
-df_samplesGT = df_samplesGT.drop(columns=['chr3'])
-df_finalsamplesGT = pd.DataFrame()
-# remove \n in the last row of data
-for col in df_samplesGT.iteritems():
-	#print(col)
-	#print(col[0])
-	#print(col[1])
-	#print(col[-1])
-	#print((col[-1].map(lambda x : x.rstrip('\n'))))
-	# add to new dataframe
-	df_finalsamplesGT[str(col[0])] = col[-1].map(lambda x : x.rstrip('\n'))
-	
-
-#print(df_samplesGT)
-print(df_finalsamplesGT.head())
-#print(df_finalsamplesGT.size())
-df_finalsamplesGT.to_csv("samplesGT_Brugada.csv", encoding = 'utf-8', index = False)
-
 df = pd.DataFrame(datalist, columns = colnames)
 print(df)
 
-#df.to_csv("extracted_ClinVar_variants_Brugada.csv", encoding = 'utf-8', index = False) 
+# save disease's extracted variants as .csv file
+df.to_csv("extracted_ClinVar_variants_Brugada.csv", encoding = 'utf-8', index = False) 
