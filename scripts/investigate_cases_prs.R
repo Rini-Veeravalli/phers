@@ -1,3 +1,7 @@
+# code snippet to investage cases with PheRS = 0 for 3 chosen diseases
+# can be run in R 3.5.0 after running phers.R and loading in and creating the appropriate datasets and variables
+
+
 # number of unique admissions in HES APC
 N_admissions = fread("~/re_gecip/health_records/PheRS/extract_ICD_codes/hes_apc_icds_v7_long_format.csv") %>%
   dplyr::select(participant_id, admidate) %>%
