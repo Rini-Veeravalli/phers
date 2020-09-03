@@ -1,7 +1,7 @@
 # Script to carry out association tests between PheRS and Case Status
 
 
-# Load libraries
+#-------- Load libraries
 
 library(data.table)
 install.packages("devtools")
@@ -11,8 +11,7 @@ install.packages("caret")
 library(caret)
 
 
-
-### Load data
+#-------- Load data
 
 icds = read.delim("~/re_gecip/health_records/PheRS/extract_ICD_codes/hes_apc_clean_icds_v7.txt", na.strings = "NA", stringsAsFactors = F)
 
@@ -67,10 +66,7 @@ ALLNUM = unique(population_icds$participant_id) %>%
   length()
 
 
-
-
-
-# PheRS is continuous, Case Status is binary
+#-------- Create functions
 
 create_filename <- function(disease_index) {
   disease_filename <- gsub(" ", "_", map_disease_omim$NormalisedSpecificDisease[disease_index])
@@ -78,15 +74,14 @@ create_filename <- function(disease_index) {
 }
 
 test_association <- function(disease_filename, disease_index, ccratio) {
-  
   print(disease_filename)
   disease_name = map_disease_omim$NormalisedSpecificDisease[disease_index]
+  
   # --- combine case/control samples with their phers
   sam = read.csv(paste0("samples_test/", disease_filename,"_samples_ccratio_", ccratio,".csv"))
   PRS = read.delim(paste0("phers_test/", disease_filename, "_phers.txt"))
   sampPheRS = sam %>% 
     inner_join(PRS, by = "participant_id") 
-
 
   # --- Non-parametric comparison between case and control phers
   compare_means <- wilcox.test(PRS ~ Pheno, data = sampPheRS)
@@ -106,7 +101,6 @@ test_association <- function(disease_filename, disease_index, ccratio) {
     filter(!duplicated(participant_id)) %>%
     mutate(Pheno = "Case")
     
-
   # --- remove participants with diagnosis from possible controls before matching
   possible_controls = population_participants %>% 
     # remove all participants_ids of participants in selected_cases
@@ -118,14 +112,12 @@ test_association <- function(disease_filename, disease_index, ccratio) {
     filter(!duplicated(participant_id)) %>% 
     mutate(Pheno = "Control")
     
-  
   popPheRS = rbind(selected_cases[, c("participant_id", "age", "binaryGender", "record_len", "Pheno")],
                    possible_controls[, c("participant_id", "age", "binaryGender", "record_len", "Pheno")]) %>% 
     mutate(Pheno = ifelse(Pheno == "Case", 1, 0) %>%
              as.factor) %>% 
     inner_join(PRS, by = "participant_id")
-  
-
+ 
   require(MASS)
   popPheRS.fit <- glm(Pheno ~ PRS, data = popPheRS, family = binomial(link = "logit"))
   popPheRS_confounding.fit <- glm(Pheno ~ PRS + age + binaryGender + record_len, data = popPheRS, family = binomial(link = "logit"))
@@ -158,16 +150,13 @@ test_association <- function(disease_filename, disease_index, ccratio) {
   
   write.csv(summary_logreg_prs, paste0("analysis_test/", disease_filename, "_association_phers.txt"), row.names = FALSE)
   write.csv(summary_logreg_confounders, paste0("analysis_test/", disease_filename, "_association_confounders.txt"), row.names = FALSE)
-  
-  
-  return(popPheRS)
  
+  return(popPheRS)
 }
 
-test_prediction <- function(disease_filename, disease_index, quantile_threshold) {
+test_prediction <- function(disease_filename, disease_index, threshold) {
   
-  # Investigate the predictive ability of PheRS
-  # Does PheRS predict case status?
+  # --- Investigate the predictive ability of PheR - does PheRS predict case status?
   
   # paper: high-scoring controls = PheRS is > 3rd quartile PheRS for cases
   # here: high-scorers = PheRS is in the 99th quantile
@@ -182,7 +171,6 @@ test_prediction <- function(disease_filename, disease_index, quantile_threshold)
     filter(!duplicated(participant_id)) %>%
     mutate(Pheno = "Case")
   
-
   possible_controls = population_icds %>% 
     inner_join(disease_label) %>%
     # remove all participants_ids of participants in recruited_cases
@@ -194,19 +182,17 @@ test_prediction <- function(disease_filename, disease_index, quantile_threshold)
     filter(!duplicated(participant_id)) %>% 
     mutate(Pheno = "Control")
   
-  
   allPheRS <- rbind(recruited_cases[, c("participant_id", "normalised_specific_disease", "Pheno")],
                    possible_controls[, c("participant_id", "normalised_specific_disease", "Pheno")]) %>% 
     mutate(Pheno = ifelse(Pheno == "Case", 1, 0) %>%
              as.factor) %>% 
     inner_join(PRS, by = "participant_id") 
   
-  
-  case_threshold <- quantile(PRS$PRS, quantile_threshold)
+ 
+  case_threshold <- quantile(PRS$PRS, threshold)
 
   # get info of participants in the 99th quantile
   # check if they are cases or controls
-  
   summary(allPheRS[allPheRS$PRS >= case_threshold, ]$Pheno)
   
   allPheRS <- allPheRS %>%
@@ -232,11 +218,9 @@ test_prediction <- function(disease_filename, disease_index, quantile_threshold)
 
   write.csv(summary_pred_stats, paste0("analysis_test/", disease_filename, "_threshold_", quantile_threshold, "_predictive_summary.txt"), row.names = FALSE)
   # hist(allPheRS[allPheRS$PRS >= case_threshold, ]$PRS)
-  
 }
 
 create_all_disease_summaries <- function() {
-  
   list_of_files <- list.files(path="analysis_test", pattern = "wilcox*.txt", full.names = TRUE) 
   summary_wilcox <- rbindlist(sapply(list_of_files, fread, simplify = F),
                               use.names = T, idcol = "FileName", fill = T)
@@ -256,7 +240,6 @@ create_all_disease_summaries <- function() {
   summary_association_confounders <- rbindlist(sapply(list_of_files, fread, simplify = F),
                                                use.names = T, idcol = "FileName", fill = T)
   write.csv(summary_association_confounders, paste0("analysis_test/all_disease_predictive_stats_summary.csv"), row.names = FALSE)
-  
 }
 
 
@@ -264,7 +247,7 @@ create_all_disease_summaries <- function() {
 
 # main script
 
-for (row in 1:nrow(map_disease_omim)) { #c(11, 31, 39)){ # 1:nrow(map_disease_omim)) { #11:11){ 
+for (row in 1:nrow(map_disease_omim)) { #c(11, 31, 39)){ # 3 test diseases BS, DCM, NF1
   tryCatch({ 
     ccratio = 4
     case_threshold = 0.99
