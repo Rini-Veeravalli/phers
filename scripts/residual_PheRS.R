@@ -1,4 +1,6 @@
-# Residual PheRS #
+# Script to calculate Residual PheRS (rPheRS)
+# - normalised rPheRS profiles are created for each participant across all diseases in the map_disease_omim dataset
+# which can be viewed in evaluate_phers() - results are not saved, further manual investigation of participants should be done
 
 
 # Load dependencies -----------------------------------
@@ -16,8 +18,6 @@ map_phe_icd10 = read_delim("~/re_gecip/health_records/PheRS/ref_data/icd10_phe_m
   distinct() %>%
   select("ICD10" = 1, PHECODE) %>%
   mutate(PhecodeCHR = as.character(as.numeric(PHECODE))) 
-### PhecodeCHR preserves original phecode format i.e. removes .0
-
 
 icds = read.delim("~/re_gecip/health_records/PheRS/extract_ICD_codes/hes_apc_clean_icds_v7.txt", na.strings = "NA", stringsAsFactors = F)
 
@@ -70,8 +70,8 @@ population_participants = population_icds %>%
 # Create functions ------------------------------------
 
 # create_filename()           # get disease name to use for naming files
-# calculate_residual_phers()  # calculate rphers and create table of rphers results
-# evaluate_residual_phers()   # evaluate rphers per participant across diseases
+# calculate_residual_phers()  # calculate rphers and creates table of rphers results - per disease for all participants
+# evaluate_residual_phers()   # evaluate rphers per participant across all diseases 
 
 
 create_filename <- function(disease_index) {
@@ -94,7 +94,6 @@ calculate_residual_phers <- function(disease_filename) {
     left_join(participants, by = "participant_id") %>% 
     mutate(age = 2019 - year_of_birth,
            binaryGender = ifelse(participant_phenotypic_sex == "Male", 1, 0))
-  
   
   phers_participants <- PRS[PRS$participant_id %in% rphers_participants$participant_id, ]
   participantPheRS = phers_participants %>%
