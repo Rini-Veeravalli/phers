@@ -2,10 +2,9 @@
 # script that transforms extracted_ClinVar_variants_[disease].txt:
 #                        columns = Chrom, Pos, Ref, Alt, INFO_AC, INFO_AN, INFO_NS, INFO_AF, SAMPLE=GT (genetic carrier information of all tested participants (in one cell)
 #                        rows = extracted ClinVar varianst of the disease
-#  
 #                   into 1) samplesGT_[disease].csv: columns = extracted ClinVar variants, rows = genetic variant results per participant 
 #                        2) extracted_ClinVar_variants_[disease].csv: .csv version of original .txt file
-# to be used to find carriers fur further analysis in variant.analysis.R
+# to be used to find carriers fur further analysis in variant_analysis.R
 
 import pandas as pd
 import numpy as np
