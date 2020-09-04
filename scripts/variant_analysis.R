@@ -112,7 +112,7 @@ carrier_phers <- phers
 carrier_phers$isCarrier <- c('NA')
 carrier_phers[carrier_phers$participant_id %in% carrier_participant_id, "isCarrier"] <- c('1')
 carrier_phers[carrier_phers$participant_id %in% noncarrier_participant_id, "isCarrier"] <- c('0')
-carrier_phers <- carrier_phers[(carrier_phers$isCarrier != "NA), ]
+carrier_phers <- carrier_phers[(carrier_phers$isCarrier != "NA"), ]
 carrier_phers$isCarrier <- as.numeric(carrier_phers$isCarrier)
 
 # add age, gender to phers and carrier status dataset           
