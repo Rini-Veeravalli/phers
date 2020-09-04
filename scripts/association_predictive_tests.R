@@ -1,4 +1,4 @@
-# Script to carry out association tests between PheRS and Case Status
+# Script to carry out association tests between PheRS and Case Status and evaluate the PheRS' predictive ability
 
 
 #-------- Load libraries
@@ -122,7 +122,6 @@ test_association <- function(disease_filename, disease_index, ccratio) {
   popPheRS.fit <- glm(Pheno ~ PRS, data = popPheRS, family = binomial(link = "logit"))
   popPheRS_confounding.fit <- glm(Pheno ~ PRS + age + binaryGender + record_len, data = popPheRS, family = binomial(link = "logit"))
   
-  
   summary_logreg_prs <- data.frame(Disease    = disease_name,
                                    p_value    = coef(summary(popPheRS.fit))["PRS", 4],
                                    OR         = exp(coef(popPheRS.fit)["PRS"]),
@@ -157,7 +156,7 @@ test_association <- function(disease_filename, disease_index, ccratio) {
 test_prediction <- function(disease_filename, disease_index, threshold) {
   
   # --- Investigate the predictive ability of PheR - does PheRS predict case status?
-  
+ 
   # paper: high-scoring controls = PheRS is > 3rd quartile PheRS for cases
   # here: high-scorers = PheRS is in the 99th quantile
   
@@ -188,9 +187,7 @@ test_prediction <- function(disease_filename, disease_index, threshold) {
              as.factor) %>% 
     inner_join(PRS, by = "participant_id") 
   
- 
   case_threshold <- quantile(PRS$PRS, threshold)
-
   # get info of participants in the 99th quantile
   # check if they are cases or controls
   summary(allPheRS[allPheRS$PRS >= case_threshold, ]$Pheno)
@@ -198,7 +195,6 @@ test_prediction <- function(disease_filename, disease_index, threshold) {
   allPheRS <- allPheRS %>%
     mutate(predicted = ifelse(PRS >= case_threshold, 1, 0) %>%
              as.factor)
-
 
   confmat <- confusionMatrix(data = allPheRS$predicted, reference = allPheRS$Pheno, positive = "1")
 
@@ -243,10 +239,7 @@ create_all_disease_summaries <- function() {
 }
 
 
-
-
 # main script
-
 for (row in 1:nrow(map_disease_omim)) { #c(11, 31, 39)){ # 3 test diseases BS, DCM, NF1
   tryCatch({ 
     ccratio = 4
