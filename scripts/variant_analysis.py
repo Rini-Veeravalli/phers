@@ -1,10 +1,11 @@
 # part I of variant analysis:
-# script that reads extracted_ClinVar_variants_[disease].txt:
-#                   columns = Chrom, Pos, Ref, Alt, INFO_AC, INFO_AN, INFO_NS, INFO_AF, SAMPLE=GT (genetic carrier information of all tested participants (in one cell)
-#                   rows = extracted ClinVar varianst of the disease
+# script that transforms extracted_ClinVar_variants_[disease].txt:
+#                        columns = Chrom, Pos, Ref, Alt, INFO_AC, INFO_AN, INFO_NS, INFO_AF, SAMPLE=GT (genetic carrier information of all tested participants (in one cell)
+#                        rows = extracted ClinVar varianst of the disease
 #  
-# and transforms it into 1) samplesGT_[disease].csv: columns = extracted ClinVar variants, rows = genetic variant results per participant 
+#                   into 1) samplesGT_[disease].csv: columns = extracted ClinVar variants, rows = genetic variant results per participant 
 #                        2) extracted_ClinVar_variants_[disease].csv: .csv version of original .txt file
+# to be used to find carriers fur further analysis in variant.analysis.R
 
 import pandas as pd
 import numpy as np
@@ -41,7 +42,8 @@ with open("extracted_ClinVar_variants_Brugada.txt") as infile:
 			df_samplesGT[str(rowentries[1])] = pd.Series(rowentries[-(len(rowentries)-8):])
 			
 			datalist.append(templist)
-				
+
+# dataframe to contain only genetically tested samples (row) for each variant (col)				
 df_samplesGT = df_samplesGT.drop(columns=['chr3'])
 df_finalsamplesGT = pd.DataFrame()
 
@@ -51,7 +53,7 @@ for col in df_samplesGT.iteritems():
 	df_finalsamplesGT[str(col[0])] = col[-1].map(lambda x : x.rstrip('\n'))	
 print(df_finalsamplesGT.head())
 
-# save dataframe of samples genetically tested for disease as .csv file
+# save dataframe as .csv file, will be used to find carriers of each variant
 df_finalsamplesGT.to_csv("samplesGT_Brugada.csv", encoding = 'utf-8', index = False)
 
 
